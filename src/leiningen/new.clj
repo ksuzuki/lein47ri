@@ -1,6 +1,6 @@
 (ns leiningen.new
   "Create a new project skeleton."
-  (:use [leiningen.core :only [ns->path abort]]
+  (:use [leiningen.core :only [ns->path abort original-pwd]]
         [clojure.java.io :only [file]]
         [clojure.string :only [join]])
   (:import (java.util Calendar)))
@@ -50,7 +50,7 @@
      (let [project-name (symbol project-name)
            group-id (namespace project-name)
            artifact-id (name project-name)
-           project-dir (-> (System/getProperty "leiningen.original.pwd")
+           project-dir (-> (original-pwd)
                            (file project-dir)
                            (.getAbsolutePath ))]
        (write-project project-dir project-name)

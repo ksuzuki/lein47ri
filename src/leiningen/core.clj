@@ -6,6 +6,7 @@
   (:import (java.io File)))
 
 (def ^{:private true} project nil)
+(def *original-pwd* "")
 
 (defn- unquote-project [args]
   (walk (fn [item]
@@ -104,12 +105,16 @@
   (merge (when-not (:omit-default-repositories project) default-repos)
          (:repositories project)))
 
+(defn original-pwd
+  []
+  (or (System/getProperty "leiningen.original.pwd") *original-pwd*))
+
 (defn read-project
   ([file]
      (try (load-file file)
           project
           (catch java.io.FileNotFoundException _)))
-  ([] (read-project "project.clj")))
+  ([] (read-project (str (File. (original-pwd) "project.clj")))))
 
 (def aliases (atom {"--help" "help" "-h" "help" "-?" "help" "-v" "version"
                     "--version" "version" "überjar" "uberjar" "cp" "classpath"
@@ -249,7 +254,7 @@ Takes major, minor and incremental versions into account."
   ([task-name & args]
      (user-init)
      (let [task-name (or (@aliases task-name) task-name "help")
-           project (if (.exists (File. "project.clj")) (read-project))
+           project (if (.exists (File. (original-pwd) "project.clj")) (read-project))
            compile-path (:compile-path project)]
        (when (:min-lein-version project)
          (verify-min-version project))
