@@ -1,3 +1,4 @@
+.DS_Store
 test_projects/*/lib
 test_projects/*/classes/
 test_projects/*/nomnomnom*.jar

@@ -17,6 +17,21 @@
       (.init)
       (.addBuildListener logger))))
 
+(defn get-ant-project
+  ([]
+     ant-project)
+  ([ops eps]
+     (let [proj (org.apache.tools.ant.Project.)
+           logger (org.apache.tools.ant.NoBannerLogger.)]
+       (doto logger
+         (.setMessageOutputLevel org.apache.tools.ant.Project/MSG_INFO)
+         (.setEmacsMode true)
+         (.setOutputPrintStream ops)
+         (.setErrorPrintStream eps))
+       (doto proj
+         (.init)
+         (.addBuildListener logger)))))
+
 (defmulti coerce (fn [dest-class src-inst] [dest-class (class src-inst)]))
 
 (defmethod coerce [java.io.File String] [_ str]
