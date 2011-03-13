@@ -136,4 +136,4 @@ Running outside a project directory will start a standalone repl session."
                  (clojure.main/with-bindings (println (eval server-form)))
                  (eval-in-project project server-form)))
        (poll-repl-connection port retries repl-client)
-       0)))
+       (exit))))

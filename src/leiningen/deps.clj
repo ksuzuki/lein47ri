@@ -1,6 +1,6 @@
 (ns leiningen.deps
   "Download all dependencies and place them in the :library-path."
-  (:require [lancet])
+  (:require [lancet.core :as lancet])
   (:use [leiningen.core :only [repositories-for]]
         [leiningen.util.maven :only [make-dependency]]
         [leiningen.util.file :only [delete-file-recursively]])
@@ -78,7 +78,7 @@
     (doseq [repo (make-repositories project)]
       (.addConfiguredRemoteRepository deps-task repo))
     (doseq [dep (project deps-set)]
-      (.addDependency deps-task (make-dependency dep)))
+      (.addDependency deps-task (make-dependency project dep)))
     deps-task))
 
 (defn use-dev-deps? [project skip-dev]

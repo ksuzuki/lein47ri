@@ -17,7 +17,7 @@
         identity
         args))
 
-(defn- normalize-path [project-root path]
+(defn normalize-path [project-root path]
   (when path
     (let [f (File. path)]
       (.getAbsolutePath (if (.isAbsolute f) f (File. project-root path))))))
@@ -66,8 +66,6 @@
                                :jar-dir (normalize-path#
                                          (or (:target-dir m#) (:jar-dir m#)
                                              root#))
-                               :java-source-path (normalize-path#
-                                                  (:java-source-path m#))
                                :root root#)))
      (when (:test-resources-path m#)
        (println (str "WARNING: :test-resources-path is deprecated; use "
@@ -268,3 +266,16 @@ Takes major, minor and incremental versions into account."
              :let [result (apply -main (or task "help") args)]]
        (when (and (number? result) (pos? result))
          (exit result)))))
+
+(defn get-ant-project
+  [ops eps]
+  (let [proj (org.apache.tools.ant.Project.)
+        logger (org.apache.tools.ant.NoBannerLogger.)]
+    (doto logger
+      (.setMessageOutputLevel org.apache.tools.ant.Project/MSG_INFO)
+      (.setEmacsMode true)
+      (.setOutputPrintStream ops)
+      (.setErrorPrintStream eps))
+    (doto proj
+      (.init)
+      (.addBuildListener logger))))
