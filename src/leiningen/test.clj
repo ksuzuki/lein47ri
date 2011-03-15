@@ -2,6 +2,7 @@
   "Run the project's tests."
   (:refer-clojure :exclude [test])
   (:use [clojure.java.io :only [file]]
+        [leiningen.core :only [*exit* eval-in-lein]]
         [leiningen.util.ns :only [namespaces-in-dir]]
         [leiningen.compile :only [eval-in-project]])
   (:import (java.io File)))
@@ -35,7 +36,7 @@ each namespace and print an overall summary."
                              (java.io.FileOutputStream.)
                              (java.io.OutputStreamWriter.))]
             (.write w# (pr-str summary#)))
-          (when ~*exit-after-tests*
+          (when (and ~*exit-after-tests* ~*exit*)
             (System/exit 0))))))
 
 (defn- read-args [args project]
@@ -57,7 +58,7 @@ each namespace and print an overall summary."
   "Run the project's tests. Accepts either a list of test namespaces to run or
 a list of test selectors. With no arguments, runs all tests."
   [project & tests]
-  (when (:eval-in-leiningen project)
+  (when (eval-in-lein (:eval-in-leiningen project))
     (require '[clojure walk template stacktrace]))
   (let [[nses selectors] (read-args tests project)
         result (doto (File/createTempFile "lein" "result") .deleteOnExit)]

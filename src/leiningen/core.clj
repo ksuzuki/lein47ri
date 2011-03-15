@@ -7,7 +7,19 @@
 
 (def ^{:private true} project nil)
 (def *original-pwd* "")
+(def *eval-in-lein* nil)
+(def *exit* true)
 
+(defn original-pwd
+  []
+  (or (System/getProperty "leiningen.original.pwd") *original-pwd*))
+
+(defn eval-in-lein
+  [eval?]
+  (if (nil? *eval-in-lein*)
+    eval?
+    *eval-in-lein*))
+ 
 (defn- unquote-project [args]
   (walk (fn [item]
           (cond (and (seq? item) (= `unquote (first item))) (second item)
@@ -78,7 +90,8 @@
 (defn exit
   "Call System/exit. Defined as a function so that rebinding is possible."
   ([code]
-     (System/exit code))
+     (when *exit*
+       (System/exit code)))
   ([] (exit 0)))
 
 (defn abort [& msg]
@@ -103,15 +116,14 @@
   (merge (when-not (:omit-default-repositories project) default-repos)
          (:repositories project)))
 
-(defn original-pwd
-  []
-  (or (System/getProperty "leiningen.original.pwd") *original-pwd*))
-
 (defn read-project
   ([file]
-     (try (load-file file)
-          project
-          (catch java.io.FileNotFoundException _)))
+     (try
+       ;; Make sure to make `defproject` available.
+       (binding [*ns* (the-ns 'leiningen.core)]
+         (load-file file)
+         project
+         (catch java.io.FileNotFoundException _))))
   ([] (read-project (str (File. (original-pwd) "project.clj")))))
 
 (def aliases (atom {"--help" "help" "-h" "help" "-?" "help" "-v" "version"
