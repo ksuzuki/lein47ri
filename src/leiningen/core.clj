@@ -9,6 +9,7 @@
 (def *original-pwd* "")
 (def *eval-in-lein* nil)
 (def *exit* true)
+(def *test-summary* nil)
 
 (defn original-pwd
   []
