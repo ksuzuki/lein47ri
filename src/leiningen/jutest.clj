@@ -1,4 +1,4 @@
-(ns leiningen.testjnt
+(ns leiningen.jutest
   "Run the project's tests and report the results in the junit compatible XML format."
   (:refer-clojure :exclude [test])
   (:use [leiningen.core :only [*exit* eval-in-lein *test-summary*]]
@@ -27,7 +27,7 @@ each namespace and print an overall summary."
           (when (and ~*exit-after-tests* ~*exit*)
             (System/exit 0))))))
 
-(defn testjnt
+(defn jutest
   "Run the project's tests. Accepts either a list of test namespaces to run or
 a list of test selectors. With no arguments, runs all tests. Report the results
 in the junit compatible XML format."
