@@ -14,8 +14,61 @@
             ArtifactRepositoryLayout)
            (org.codehaus.plexus.embed Embedder)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; The default console logger spits messeages to System/out. So, for example,
+;; the 'installing' message from maven on 'lein install' can't be captured by
+;; binding *out*. It can't be helped because the logger doesn't know anything
+;; about *out*. 
+;; To workaround the issue, create a *out* savvy logger and use it when (and
+;; only when for now) ArtifactInstaller is requested.
+
+(defmacro pmti ;;= 'print message and throwable if'
+  [prd pfx msg trb]
+  `(when (proxy-super ~prd)
+     (println ~pfx ~msg)
+     (when-not (nil? ~trb)
+       (.printStackTrace ~trb *out*))))
+
+(def lein-logger
+  (let [threshold org.codehaus.plexus.logging.Logger/LEVEL_INFO
+        name "LeinLogger"]
+    (proxy [org.codehaus.plexus.logging.AbstractLogger] [threshold name]
+      (debug
+        ([m] (.debug this m nil))
+        ([m t] (pmti isDebugEnabled "[DEBUG]" m t)))
+      (info
+        ([m] (.info this m nil))
+        ([m t] (pmti isInfoEnabled "[INFO]" m t)))
+      (warn
+        ([m] (.warn this m nil))
+        ([m t] (pmti isWarnEnabled "[WARNING]" m t)))
+      (error
+        ([m] (.error this m nil))
+        ([m t] (pmti isErrorEnabled "[ERROR]" m t)))
+      (fatalError
+        ([m] (.fatalError this m nil))
+        ([m t] (pmti isFatalErrorEnabled "[FATAL ERROR]" m t)))
+      (getChildLogger [n] this))))
+
+(defn create-lein-logger-manager
+  []
+  (let [llm (proxy [org.codehaus.plexus.logging.console.ConsoleLoggerManager] []
+              (getLoggerForComponent [role role-hint]
+                #_(println "!!! role:" role "role-hint:" role-hint)
+                (if (= role org.apache.maven.artifact.installer.ArtifactInstaller/ROLE)
+                  lein-logger ;; Return the *out* savvy logger.
+                  (proxy-super getLoggerForComponent role role-hint))))]
+    (.setThreshold llm org.codehaus.plexus.logging.Logger/LEVEL_INFO)
+    (.initialize llm)
+    llm))
+
 ;; Welcome to the absurdist self-parodying world of Dependency Injection
-(def container (.getContainer (doto (Embedder.) (.start))))
+(def container
+  (let [cntnr (.getContainer (doto (Embedder.) (.start)))]
+    (.setLoggerManager cntnr (create-lein-logger-manager))
+    cntnr))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def layout
   (.lookup container ArtifactRepositoryLayout/ROLE "default"))
