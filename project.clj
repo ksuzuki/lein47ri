@@ -9,7 +9,7 @@
   :dependencies [[lancet "1.0.0"]
                  [robert/hooke "1.1.0"]
                  [org.apache.maven/maven-ant-tasks "2.0.10" :exclusions [ant]]]
-  :dev-dependencies [[org.clojure/clojure "1.2.0"]
+  :dev-dependencies [[org.clojure/clojure "1.2.1"]
                      [org.clojure/clojure-contrib "1.2.0"]]
   :disable-implicit-clean true
   :eval-in-leiningen true)

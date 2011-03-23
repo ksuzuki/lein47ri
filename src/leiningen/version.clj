@@ -4,6 +4,6 @@
 (defn version
   "Print version for Leiningen and the current JVM."
   []
-  (println "Leiningen" (System/getenv "LEIN_VERSION")
+  (println "Lein47ri 1.5.0-RC1"
            "on Java" (System/getProperty "java.version")
            (System/getProperty "java.vm.name")))

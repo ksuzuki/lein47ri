@@ -30,7 +30,7 @@
         identity
         args))
 
-(defn normalize-path [project-root path]
+(defn ^{:internal true} normalize-path [project-root path]
   (when path
     (let [f (File. path)]
       (.getAbsolutePath (if (.isAbsolute f) f (File. project-root path))))))
@@ -95,7 +95,9 @@
        (System/exit code)))
   ([] (exit 0)))
 
-(defn abort [& msg]
+(defn abort
+  "Print msg to standard err and exit with a value of 1."
+  [& msg]
   (binding [*out* *err*]
     (apply println msg)
     (exit 1)))
@@ -108,23 +110,53 @@
                             (File. (System/getProperty "user.home") ".lein"))
                       .mkdirs)))
 
-(def default-repos {"central" "http://repo1.maven.org/maven2"
-                    "clojure" "http://build.clojure.org/releases"
-                    "clojure-snapshots" "http://build.clojure.org/snapshots"
-                    "clojars" "http://clojars.org/repo/"})
+(defn user-init
+  "Load the user's ~/.lein/init.clj file, if present."
+  []
+  (let [init-file (File. (home-dir) "init.clj")]
+    (when (.exists init-file)
+      (load-file (.getAbsolutePath init-file)))))
 
-(defn repositories-for [project]
-  (merge (when-not (:omit-default-repositories project) default-repos)
-         (:repositories project)))
+(defn user-settings
+  "Look up the settings map from init.clj or an empty map if it doesn't exist."
+  []
+  (if-let [settings-var (resolve 'user/settings)]
+    @settings-var
+    {}))
+
+(def default-repos {"central" {:url "http://repo1.maven.org/maven2"
+                               :snapshots false}
+                    "clojure" {:url "http://build.clojure.org/releases"
+                               :snapshots false}
+                    ;; TODO: remove from defaults in 2.0.
+                    "clojure-snapshots" {:url "http://build.clojure.org/snapshots"
+                                         :releases false}
+                    ;; TODO: possibly separate releases/snapshots in 2.0.
+                    "clojars" {:url "http://clojars.org/repo/"}})
+
+(defn- init-settings [id settings]
+  (cond (string? settings) {:url settings}
+        ;; infer snapshots/release policy from repository id
+        (= "releases" id) (merge {:snapshots false} settings)
+        (= "snapshots" id) (merge {:releases false} settings)
+        :else settings))
+
+(defn repositories-for
+  "Return a map of repositories including or excluding defaults."
+  [project]
+  (merge (when-not (:omit-default-repositories project)
+           default-repos)
+         (into {} (for [[id settings] (:repositories project)]
+                    [id (init-settings id settings)]))))
 
 (defn read-project
   ([file]
      (try
        ;; Make sure to make `defproject` available.
        (binding [*ns* (the-ns 'leiningen.core)]
-         (load-file file)
-         project
-         (catch java.io.FileNotFoundException _))))
+         (load-file file))
+       project
+       (catch java.io.FileNotFoundException _)))
   ([] (read-project (str (File. (original-pwd) "project.clj")))))
 
 (def aliases (atom {"--help" "help" "-h" "help" "-?" "help" "-v" "version"
@@ -160,11 +192,6 @@
              (println "Warning: problem requiring" n "hook:" (.getMessage e))
              (when (System/getenv "DEBUG")
                (.printStackTrace e)))))))
-
-(defn user-init []
-  (let [init-file (File. (home-dir) "init.clj")]
-    (when (.exists init-file)
-      (load-file (.getAbsolutePath init-file)))))
 
 (defn ns->path [n]
   (str (.. (str n)
