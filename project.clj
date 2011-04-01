@@ -3,7 +3,7 @@
 ;; defproject form. It can have other code in it as well, including
 ;; loading other task definitions.
 
-(defproject lein47ri "1.5.0-RC1"
+(defproject lein47ri "1.5.1-RC1"
   :description "Lein for Sevenri"
 ;  :url "https://github.com/technomancy/leiningen"
   :license {:name "Eclipse Public License"}

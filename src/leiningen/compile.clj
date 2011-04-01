@@ -2,7 +2,7 @@
   "Compile Clojure source into .class files."
   (:require [lancet.core :as lancet])
   (:use [leiningen.deps :only [deps]]
-        [leiningen.core :only [ns->path original-pwd eval-in-lein]]
+        [leiningen.core :only [ns->path user-settings original-pwd eval-in-lein]]
         [leiningen.javac :only [javac]]
         [leiningen.classpath :only [make-path find-lib-jars get-classpath]]
         [clojure.java.io :only [file]]
@@ -128,7 +128,7 @@
         (conj args (str "-Dleiningen.original.pwd=" (original-pwd)))))))
 
 (defn- get-jvm-args [project]
-  (concat (get-input-args) (:jvm-opts project)))
+  (concat (get-input-args) (:jvm-opts project) (:jvm-opts (user-settings))))
 
 (defn get-readable-form [java project form init]
   (let [cp (str (.getClasspath (.getCommandLine java)))
@@ -164,7 +164,8 @@
              (empty? (.list (file (:compile-path project)))))
     (binding [*silently* true]
       (compile project)))
-  (when (empty? (find-lib-jars project))
+  (when (or (empty? (find-lib-jars project))
+            (:checksum-deps project))
     (deps project))
   (if (eval-in-lein (:eval-in-leiningen project))
     (do ;; bootclasspath workaround: http://dev.clojure.org/jira/browse/CLJ-673
