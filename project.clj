@@ -1,3 +1,4 @@
+;; !!! Use lein 1.4 to jar and test !!!
 ;; The only requirement of the project.clj file is that it includes a
 ;; defproject form. It can have other code in it as well, including
 ;; loading other task definitions.
@@ -11,5 +12,6 @@
                  [org.apache.maven/maven-ant-tasks "2.0.10" :exclusions [ant]]]
   :dev-dependencies [[org.clojure/clojure "1.2.1"]
                      [org.clojure/clojure-contrib "1.2.0"]]
-  :disable-implicit-clean true
-  :eval-in-leiningen true)
+  :aot [leiningen.LeinDependenciesTask]
+;  :eval-in-leiningen true
+  :disable-implicit-clean true)

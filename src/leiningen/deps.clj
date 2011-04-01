@@ -10,7 +10,10 @@
                                           RemoteRepository RepositoryPolicy)
            (org.apache.maven.settings Server)
            (org.apache.maven.artifact.repository ArtifactRepositoryPolicy)
-           (org.apache.tools.ant.util FlatFileNameMapper)))
+           (org.apache.tools.ant.util FlatFileNameMapper)
+           ;;
+           (leiningen LeinDependenciesTask)))
+
 
 (def update-policies {:daily ArtifactRepositoryPolicy/UPDATE_POLICY_DAILY
                       :always ArtifactRepositoryPolicy/UPDATE_POLICY_ALWAYS
@@ -77,7 +80,7 @@
                 :resource (.getCanonicalPath (File. dir f))}))))
 
 (defn make-deps-task [project deps-set]
-  (let [deps-task (DependenciesTask.)]
+  (let [deps-task (LeinDependenciesTask.)]
     (.setProject deps-task lancet/ant-project)
     ;; in maven-ant-tasks (at least 2.0.10 and 2.1.1) if there's an
     ;; exception thrown, there must be a call to
