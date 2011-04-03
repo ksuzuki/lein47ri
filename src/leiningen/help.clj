@@ -1,13 +1,20 @@
 (ns leiningen.help
   "Display a list of tasks or help for a given task."
-  (:use [leiningen.util.ns :only [namespaces-matching]])
+  (:use [leiningen.core :only [*original-pwd* *help-excluding-tasks*]]
+        [leiningen.util.ns :only [namespaces-matching]])
   (:require [clojure.string :as string]
             [clojure.java.io :as io]))
 
-(def tasks (->> (namespaces-matching "leiningen")
-                (filter #(re-find #"^leiningen\.(?!core|util)[^\.]+$" (name %)))
-                (distinct)
-                (sort)))
+(defn task-filter-re []
+  (let [xs (str "core|util" (when *help-excluding-tasks*
+                              (str "|" (apply str (interpose "|" *help-excluding-tasks*)))))]
+    (re-pattern (str "^leiningen\\.(?!" xs ")[^\\.]+$"))))
+
+(defn tasks []
+  (->> (namespaces-matching "leiningen" *original-pwd*)
+       (filter #(re-find (task-filter-re) (name %)))
+       (distinct)
+       (sort)))
 
 (defn get-arglists [task]
   (for [args (or (:help-arglists (meta task)) (:arglists (meta task)))]
@@ -86,7 +93,7 @@ tutorial, news, sample, and copying documentation."
   ([]
      (println "Leiningen is a build tool for Clojure.\n")
      (println "Several tasks are available:")
-     (doseq [task-ns tasks]
+     (doseq [task-ns (tasks)]
        (println (help-summary-for task-ns)))
      (println "\nRun lein help $TASK for details.")
      (println "Also available: readme, tutorial, copying, sample, and news.")))

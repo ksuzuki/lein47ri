@@ -11,6 +11,7 @@
 (def *eval-in-lein* nil)
 (def *exit* true)
 (def *test-summary* nil)
+(def *help-excluding-tasks* nil)
 
 (defn original-pwd
   []

@@ -16,6 +16,16 @@
                   (System/getProperty "path.separator"))]
     (file f)))
 
+(defn context-classpath-files [classpath-files pwd]
+  (let [lib-dev-dir (when pwd (file pwd "lib/dev"))
+        lib-dev-jars (when (.exists lib-dev-dir)
+                       (for [f (file-seq lib-dev-dir)
+                             :when (re-matches #".*\.jar$" (.getName f))]
+                         f))]
+    (if (seq lib-dev-jars)
+      (concat classpath-files lib-dev-jars)
+      classpath-files)))
+
 (defn clj? [f]
   (.endsWith (.getName f) ".clj"))
 
@@ -58,10 +68,21 @@
       (if-let [ns-form (ns-in-jar-entry jarfile entry)]
         (second ns-form)))))
 
-(defn namespaces-matching [prefix]
-  (concat (mapcat namespaces-in-dir
-                  (for [dir classpath-files
-                        :when (.isDirectory dir)]
-                    (file dir (.replaceAll prefix "\\." "/"))))
-          (filter #(and % (.startsWith (name %) prefix))
-                  (mapcat namespaces-in-jar (filter jar? classpath-files)))))
+(defn namespaces-in-lein-jar []
+  (when-let [vr (find-var 'leiningen.core/-main)]
+    (let [cls (class (var-get vr))
+          url (str (.getResource cls (str "/leiningen/core.clj")))
+          jar (when-not (neg? (.lastIndexOf url "jar!"))
+                (.substring url (+ (.indexOf url "file:") 5) (.lastIndexOf url "!")))]
+      (when jar
+        (filter identity (namespaces-in-jar jar))))))
+
+(defn namespaces-matching [prefix pwd]
+  (let [cxt-classpath-files (context-classpath-files classpath-files pwd)]
+    (concat (namespaces-in-lein-jar)
+            (mapcat namespaces-in-dir
+                    (for [dir cxt-classpath-files
+                          :when (.isDirectory dir)]
+                      (file dir (.replaceAll prefix "\\." "/"))))
+            (filter #(and % (.startsWith (name %) prefix))
+                    (mapcat namespaces-in-jar (filter jar? cxt-classpath-files))))))

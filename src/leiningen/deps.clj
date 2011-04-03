@@ -12,7 +12,7 @@
            (org.apache.maven.artifact.repository ArtifactRepositoryPolicy)
            (org.apache.tools.ant.util FlatFileNameMapper)
            ;;
-           (leiningen LeinDependenciesTask)))
+           (mavenant LeinDependenciesTask)))
 
 
 (def update-policies {:daily ArtifactRepositoryPolicy/UPDATE_POLICY_DAILY
@@ -79,6 +79,9 @@
     (doseq [f files]
       (symlink {:link destination
                 :resource (.getCanonicalPath (File. dir f))}))))
+
+(defn lein-dependencies-task
+  [])
 
 (defn make-deps-task [project deps-set]
   (let [deps-task (LeinDependenciesTask.)]

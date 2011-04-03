@@ -18,7 +18,7 @@
 ;; default. We create an instance of RMM with *out* suvvy logger before the
 ;; updater requests RMM (so the one we created is used).
 
-(ns leiningen.LeinDependenciesTask
+(ns mavenant.LeinDependenciesTask
   (:gen-class
    :extends org.apache.maven.artifact.ant.DependenciesTask
    :exposes-methods {getProject superGetProject doExecute superDoExecute}
@@ -44,19 +44,19 @@
     (proxy [org.codehaus.plexus.logging.AbstractLogger] [threshold name]
       (debug
         ([m] (.debug this m nil))
-        ([m t] (pmti isDebugEnabled "[DEBUG] " m t)))
+        ([m t] (binding [*out* *err*] (pmti isDebugEnabled "[DEBUG] " m t))))
       (info
         ([m] (.info this m nil))
         ([m t] (pmti isInfoEnabled nil m t)))
       (warn
         ([m] (.warn this m nil))
-        ([m t] (pmti isWarnEnabled "[WARNING] " m t)))
+        ([m t] (binding [*out* *err*] (pmti isWarnEnabled "[WARNING] " m t))))
       (error
         ([m] (.error this m nil))
-        ([m t] (pmti isErrorEnabled "[ERROR] " m t)))
+        ([m t] (binding [*out* *err*] (pmti isErrorEnabled "[ERROR] " m t))))
       (fatalError
         ([m] (.fatalError this m nil))
-        ([m t] (pmti isFatalErrorEnabled "[FATAL ERROR] " m t)))
+        ([m t] (binding [*out* *err*] (pmti isFatalErrorEnabled "[FATAL ERROR] " m t))))
       (getChildLogger [n] this))))
 
 (defn -doExecute
