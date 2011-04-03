@@ -2,9 +2,12 @@
 ;; defproject form. It can have other code in it as well, including
 ;; loading other task definitions.
 
-;; !!! If you touch src/mavenant/LeinDependenciesTask.clj !!!
-;; Using lein 1.4 clean everything and then do deps and compile.
-;; Copy the AOT-compiled files to the directory src/mavenant.
+;; !!! If you touch src/mavenant/LeinDependenciesTask.clj or get an
+;; !!! exception like 'duplicate entry'...
+;; Using lein 1.4 clean everything and remove files in src/mavenant
+;; except LeinDependenciesTask.clj. AOT-compile then move the compiled
+;; files in classes/mavenant to src/mavenant (so classes/mavenant
+;; becomes empty).
 ;; Then you can use the latest lein to perform normal tasks.
 
 (defproject lein47ri "1.5.1-RC1"
