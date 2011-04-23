@@ -10,7 +10,7 @@
 ;; becomes empty).
 ;; Then you can use the latest lein to perform normal tasks.
 
-(defproject lein47ri "1.5.1-RC1"
+(defproject lein47ri "1.5.2-RC1"
   :description "Lein for Sevenri"
 ;  :url "https://github.com/technomancy/leiningen"
   :license {:name "Eclipse Public License"}

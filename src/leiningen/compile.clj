@@ -131,7 +131,9 @@
   (concat (get-input-args) (:jvm-opts project) (:jvm-opts (user-settings))))
 
 (defn get-readable-form [java project form init]
-  (let [cp (str (.getClasspath (.getCommandLine java)))
+  (let [cp (if java
+             (str (.getClasspath (.getCommandLine java)))
+             (System/getProperty "java.class.path"))
         form `(do ~init
                   (def ~'*classpath* ~cp)
                   (set! ~'*warn-on-reflection*
@@ -175,7 +177,7 @@
         (System/setProperty "clojure.debug" "true"))
       ;; need to at least pretend to return an exit code
       (try (binding [*warn-on-reflection* (:warn-on-reflection project)]
-             (eval form))
+             (eval (read-string (get-readable-form nil project form init))))
            0
            (catch Exception e
              (.printStackTrace e)
@@ -262,8 +264,10 @@
 (def ^{:private true} failure (partial status 1))
 
 (defn compile
-  "Ahead-of-time compile the namespaces given under :aot in project.clj or
-those given as command-line arguments."
+  "Compile Clojure source into .class files.
+
+Uses the namespaces specified under :aot in project.clj or those given
+as command-line arguments."
   ([project]
      (.mkdir (file (:compile-path project)))
      (when (:java-source-path project)

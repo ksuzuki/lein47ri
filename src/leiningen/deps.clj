@@ -1,5 +1,5 @@
 (ns leiningen.deps
-  "Download all dependencies and place them in the :library-path."
+  "Download all dependencies and put them in :library-path."
   (:require [lancet.core :as lancet])
   (:use [leiningen.core :only [repositories-for user-settings]]
         [leiningen.util.maven :only [make-dependency]]
@@ -102,7 +102,7 @@
     (doseq [repo (make-repositories project)]
       (.addConfiguredRemoteRepository deps-task repo))
     (doseq [dep (project deps-set)]
-      (.addDependency deps-task (make-dependency project dep)))
+      (.addDependency deps-task (make-dependency dep project)))
     deps-task))
 
 (defn use-dev-deps? [project skip-dev]
@@ -128,9 +128,8 @@
              (not (.exists deps-checksum-file))
              (not= (slurp deps-checksum-file) (deps-checksum project))))))
 
-(defn ^{:help-arglists '([] [skip-dev])} deps
-  "Download and install all :dependencies and :dev-dependencies listed in
-project.clj. With an argument it will skip development dependencies."
+(defn ^{:help-arglists '([])} deps
+  "Download :dependencies and put them in :library-path."
   ([project skip-dev deps-set]
      (when (fetch-deps? project deps-set skip-dev)
        (when-not (or (:disable-deps-clean project)
@@ -141,10 +140,20 @@ project.clj. With an argument it will skip development dependencies."
                                     (.getFilesetId deps-task))]
          (.mkdirs (File. (:library-path project)))
          (copy-dependencies (:jar-behavior project)
-                            (:library-path project)
+                            ;; Leiningen's process only has access to lib/dev.
+                            (if (:eval-in-leiningen project)
+                              "lib/dev"
+                              (:library-path project))
                             true fileset)
          (when (use-dev-deps? project skip-dev)
-           (deps (assoc project :library-path (str (:root project) "/lib/dev"))
+           ;; TODO: skip-dev/deps-set args are nonsense; we should
+           ;; just replace :dependencies with :dev-dependencies and
+           ;; recur in 2.0.
+           (deps (assoc project :library-path (str (:root project) "/lib/dev")
+                        :disable-implicit-clean (if (:eval-in-leiningen project)
+                                                  false
+                                                  (:disable-implicit-clean
+                                                   project)))
                  true :dev-dependencies))
          (when (:checksum-deps project)
            (spit (new-deps-checksum-file project) (deps-checksum project)))

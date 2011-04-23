@@ -10,11 +10,10 @@
 
 (def *retry-limit* 100)
 
-;; TODO: test custom options, repl in interactive
 (defn repl-options [project options]
   (let [options (apply hash-map options)
         init `#(let [is# ~(:repl-init-script project)
-                     in# ~(:repl-init project)
+                     in# '~(:repl-init project)
                      mn# '~(:main project)]
                  ~(:init options)
                  (when (and is# (.exists (File. (str is#))))
@@ -121,9 +120,11 @@
        "localhost")])
 
 (defn repl
-  "Start a repl session. A socket-repl will also be launched in the background
-on a socket based on the :repl-port key in project.clj or chosen randomly.
-Running outside a project directory will start a standalone repl session."
+  "Start a repl session either with the current project or standalone.
+
+A socket-repl will also be launched in the background on a socket based on the
+:repl-port key in project.clj or chosen randomly. Running outside a project
+directory will start a standalone repl session."
   ([] (repl {}))
   ([project]
      ;; TODO: don't start socket server until deps
